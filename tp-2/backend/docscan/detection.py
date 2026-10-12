@@ -2,7 +2,10 @@
 Módulo para la detección y el procesamiento geométrico de las esquinas del documento.
 """
 
+import cv2
 import numpy as np
+
+from docscan.filters import Grayscale
 
 
 def order_corners(points: np.ndarray) -> np.ndarray:
@@ -51,4 +54,26 @@ class DocumentDetector:
         self.approx_epsilon = approx_epsilon
         self.close_kernel_size = close_kernel_size
         self.work_size = work_size
-        
+
+    def _find_edges(self, image: np.ndarray) -> np.ndarray:
+        """
+        Aplica una serie de preprocesamientos para encontrar los bordes de la imagen:
+        1. Convierte a grises reutilizando el filtro Grayscale.
+        2. Aplica desenfoque gaussiano para reducir el ruido.
+        3. Detecta bordes utilizando el algoritmo de Canny.
+        4. Cierra los huecos en los bordes mediante operaciones morfológicas (Closing).
+        """
+        # 1. Pasar a grises usando el filtro que ya armamos en el módulo filters
+        gray = Grayscale().apply(image)
+
+        # 2. Desenfoque gaussiano para suavizar la imagen (el ksize debe ser impar, ej. 5x5)
+        blurred = cv2.GaussianBlur(gray, (self.blur_ksize, self.blur_ksize), 0)
+
+        # 3. Detección de bordes con Canny usando los umbrales configurados
+        edged = cv2.Canny(blurred, self.canny_threshold1, self.canny_threshold2)
+
+        # 4. Cerrar huecos en los bordes usando morfología matemática (Dilation seguida de Erosion)
+        kernel = np.ones((self.close_kernel_size, self.close_kernel_size), np.uint8)
+        closed = cv2.morphologyEx(edged, cv2.MORPH_CLOSE, kernel)
+
+        return closed
