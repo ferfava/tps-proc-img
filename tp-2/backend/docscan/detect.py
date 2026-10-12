@@ -31,7 +31,10 @@ def detect_document (image: np.ndarray) -> np.ndarray:
 
         for c in image_contourns:
             aprox_image = cv2.approxPolyDP(c, 0.02 * float(cv2.arcLength(c, True)), True)
-            if len (aprox_image) == 4 and cv2.isContourConvex(aprox_image) and cv2.contourArea(aprox_image) > (reduced_image.shape[0]*reduced_image.shape[1]* 0.15)  :
+            if len (aprox_image) !=4: #Margen adicional para más flexibilidad
+                aprox_image = cv2.approxPolyDP(c, 0.04 * float(cv2.arcLength(c, True)), True)
+            
+            if len(aprox_image) == 4 and cv2.isContourConvex(aprox_image) and cv2.contourArea(aprox_image) > (reduced_image.shape[0]*reduced_image.shape[1]* 0.15)  :
                 
                 pts = aprox_image.reshape(4,2)
                 
