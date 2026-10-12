@@ -112,14 +112,18 @@ class SoftenColors(Filter):
     mezclándolos sutilmente con el blanco usando el espacio HSV.
     """
 
-    def __init__(self, strength: float = 0.0) -> None:
-        """Guarda y valida la fuerza del suavizado de colores."""
+    def __init__(self, strength: float = 0.0, brightness_power: float = 3.0) -> None:
+        """Guarda y valida la fuerza del suavizado y la potencia del brillo."""
         if not (0.0 <= strength <= 1.0):
             raise ValueError("El strength debe estar entre 0.0 y 1.0.")
+        if brightness_power <= 0:
+            raise ValueError("El brightness_power debe ser mayor a 0.")
+        
         self.strength = strength
+        self.brightness_power = brightness_power
 
     def apply(self, image: np.ndarray) -> np.ndarray:
-        """Aclara colores intensos evaluando su saturación y brillo en HSV."""
+        """Aclara colores intensos evaluando saturación y brillo elevado a una potencia."""
         # Si la imagen es en grises (2 dimensiones), no tiene colores, la devolvemos igual
         if image.ndim == 2:
             return image.copy()
@@ -131,8 +135,8 @@ class SoftenColors(Filter):
         s = hsv[:, :, 1].astype(np.float32)
         v = hsv[:, :, 2].astype(np.float32)
 
-        # 3. Calculamos el peso de aclarado para cada píxel
-        weight = self.strength * (s / 255.0) * (v / 255.0)
+        # 3. Calculamos el peso aplicando la potencia al brillo (protegiendo trazos de birome)
+        weight = self.strength * (s / 255.0) * ((v / 255.0) ** self.brightness_power)
 
         # 4. Pasamos la imagen a decimales para operar sin perder precisión
         image_float = image.astype(np.float32)
