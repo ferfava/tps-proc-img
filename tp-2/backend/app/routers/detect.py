@@ -1,4 +1,4 @@
-import docscan
+from docscan.detect import detect_document
 from typing import Annotated
 
 from fastapi import APIRouter, File, UploadFile
@@ -19,6 +19,6 @@ async def detect(file: Annotated[UploadFile, File(description="Photo of a docume
     upload = await read_upload(file)  # given: 413 FILE_TOO_LARGE / 400 INVALID_FILE / 400 UNSUPPORTED_FORMAT
     # TODO (team): find the document in upload.photo.image with docscan and return its corners.
 
-    corners = docscan.detect_document(upload.photo.image)
+    corners = detect_document(upload.photo.image)
 
     return DetectionOut(width=upload.photo.width, height=upload.photo.height, corners=corners)

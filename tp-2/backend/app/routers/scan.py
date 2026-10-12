@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Annotated
 import uuid
 from app.config import STORAGE_DIR
+from  docscan.detect import detect_document
 
 from fastapi import APIRouter, File, Form, UploadFile, status
 
@@ -50,6 +51,9 @@ async def create_scan(
     }
 
     image = upload.photo.image
+
+    
+    
 
     if color_correction :
         new_image = ColorCorrectionFilter().apply(image)

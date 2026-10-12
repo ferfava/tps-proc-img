@@ -1,10 +1,10 @@
 import numpy as np
-from filters import GrayscaleFilter, BWFilter
+from docscan.filters import GrayscaleFilter, BWFilter
 from dataclasses import dataclass
 import cv2
 from docscan import exceptions
 
-def detect_document (self, image: np.ndarray) -> np.ndarray:
+def detect_document (image: np.ndarray) -> np.ndarray:
         image_shape = image.shape
         if image_shape[0] > image_shape[1]:
             larger_side = image_shape[0]
@@ -30,7 +30,7 @@ def detect_document (self, image: np.ndarray) -> np.ndarray:
         image_contourns = sorted(image_contourns[0], key=cv2.contourArea, reverse=True)[:5]
 
         for c in image_contourns:
-            aprox_image = cv2.approxPolyDP(c, 0.02 * cv2.arcLength(c, True))
+            aprox_image = cv2.approxPolyDP(c, 0.02 * float(cv2.arcLength(c, True)), True)
             if len (aprox_image) == 4 and cv2.isContourConvex(aprox_image) and cv2.contourArea(aprox_image) > (reduced_image.shape[0]*reduced_image.shape[1]* 0.15)  :
                 
                 pts = aprox_image.reshape(4,2)
