@@ -25,4 +25,30 @@ def order_corners(points: np.ndarray) -> np.ndarray:
 
     # 4. Devolvemos el array ordenado como pide el estándar
     return np.array([top_left, top_right, bottom_right, bottom_left], dtype=np.float32)
-    
+
+
+class DocumentDetector:
+    """
+    Clase encargada de procesar una imagen para encontrar las 4 esquinas 
+    del documento principal utilizando técnicas de visión por computadora.
+    """
+
+    def __init__(
+        self,
+        blur_ksize: int = 5,
+        canny_threshold1: int = 75,
+        canny_threshold2: int = 200,
+        min_area_ratio: float = 0.15,
+        approx_epsilon: float = 0.02,
+        close_kernel_size: int = 5,
+        work_size: int = 600
+    ) -> None:
+        """Guarda los parámetros de configuración para la detección de bordes."""
+        self.blur_ksize = blur_ksize
+        self.canny_threshold1 = canny_threshold1
+        self.canny_threshold2 = canny_threshold2
+        self.min_area_ratio = min_area_ratio
+        self.approx_epsilon = approx_epsilon
+        self.close_kernel_size = close_kernel_size
+        self.work_size = work_size
+        
