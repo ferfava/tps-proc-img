@@ -105,4 +105,42 @@ class ColorCorrection(Filter):
         
         return corrected_image.astype(np.uint8)
 
-        
+
+class SoftenColors(Filter):
+    """
+    Filtro que aclara los colores fuertes (como resaltadores o sellos)
+    mezclándolos sutilmente con el blanco usando el espacio HSV.
+    """
+
+    def __init__(self, strength: float = 0.0) -> None:
+        """Guarda y valida la fuerza del suavizado de colores."""
+        if not (0.0 <= strength <= 1.0):
+            raise ValueError("El strength debe estar entre 0.0 y 1.0.")
+        self.strength = strength
+
+    def apply(self, image: np.ndarray) -> np.ndarray:
+        """Aclara colores intensos evaluando su saturación y brillo en HSV."""
+        # Si la imagen es en grises (2 dimensiones), no tiene colores, la devolvemos igual
+        if image.ndim == 2:
+            return image.copy()
+
+        # 1. Convertimos la imagen de BGR a HSV
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+        # 2. Extraemos las capas de Saturación (S) y Brillo (V) y las pasamos a float32
+        s = hsv[:, :, 1].astype(np.float32)
+        v = hsv[:, :, 2].astype(np.float32)
+
+        # 3. Calculamos el peso de aclarado para cada píxel
+        weight = self.strength * (s / 255.0) * (v / 255.0)
+
+        # 4. Pasamos la imagen a decimales para operar sin perder precisión
+        image_float = image.astype(np.float32)
+
+        # 5. Aplicamos la mezcla con el blanco usando np.newaxis para el broadcasting
+        weight_expanded = weight[:, :, np.newaxis]
+        softened_image = image_float + weight_expanded * (255.0 - image_float)
+
+        # 6. Recortamos los valores entre 0 y 255, y volvemos a formato uint8
+        softened_image = np.clip(softened_image, 0, 255)
+        return softened_image.astype(np.uint8)
