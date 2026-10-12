@@ -5,6 +5,7 @@ Módulo para la detección y el procesamiento geométrico de las esquinas del do
 import cv2
 import numpy as np
 
+from docscan.exceptions import DocumentNotFound
 from docscan.filters import Grayscale
 
 
@@ -77,3 +78,45 @@ class DocumentDetector:
         closed = cv2.morphologyEx(edged, cv2.MORPH_CLOSE, kernel)
 
         return closed
+
+    def detect(self, image: np.ndarray) -> np.ndarray:
+        """
+        Detecta el documento principal en la imagen, encontrando y ordenando 
+        sus 4 esquinas para su posterior corrección geométrica.
+        """
+        # Parte A: Achicar la foto para agilizar el procesamiento
+        height, width = image.shape[:2]
+        scale = self.work_size / max(height, width)
+        new_width = round(width * scale)
+        new_height = round(height * scale)
+        small = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
+
+        # Parte B: Obtener bordes y contornos
+        edges = self._find_edges(small)
+        contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        # Área mínima requerida (proporción respecto al tamaño de la imagen de trabajo)
+        min_area = self.min_area_ratio * small.shape[0] * small.shape[1]
+
+        # Parte C: Buscar la hoja entre los contornos (ordenados de mayor a menor área)
+        for contour in sorted(contours, key=cv2.contourArea, reverse=True):
+            perimeter = cv2.arcLength(contour, True)
+            approx = cv2.approxPolyDP(contour, self.approx_epsilon * perimeter, True)
+
+            # Validamos que tenga 4 lados, sea convexo y su área sea suficiente
+            if (
+                len(approx) == 4
+                and cv2.isContourConvex(approx)
+                and cv2.contourArea(approx) >= min_area
+            ):
+                # Pasamos a float32, reajustamos a la forma (4, 2) y reescalamos a la resolución original
+                points = approx.reshape(4, 2).astype(np.float32)
+                points = points / scale
+                return order_corners(points)
+
+        # Parte D: Si no se encuentra un contorno válido, lanzamos la excepción personalizada
+        raise DocumentNotFound(
+            "No se pudo detectar el documento. Asegurate de que "
+            "las 4 esquinas sean visibles, el fondo contraste con la hoja y haya buena iluminación."
+        )
+        
