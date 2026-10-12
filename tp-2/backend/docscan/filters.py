@@ -28,7 +28,8 @@ class Grayscale(Filter):
 
     def apply(self, image: np.ndarray) -> np.ndarray:
         """Aplica la conversión de color BGR a Gris usando OpenCV."""
-        # Si la imagen ya tiene 2 dimensiones, significa que ya es gris. La devuelvo copiada.
+        # Si la imagen ya tiene 2 dimensiones, significa que ya es gris.
+        # La devuelvo copiada.
         if image.ndim == 2:
             return image.copy()
 
@@ -53,10 +54,12 @@ class BlackAndWhite(Filter):
 
     def apply(self, image: np.ndarray) -> np.ndarray:
         """Pasa la imagen a grises y aplica umbral adaptativo."""
-        # 1. Primero la pasamos a grises usando el filtro que ya armamos (¡sin repetir código!)
+        # 1. Primero la pasamos a grises usando el filtro
+        # que ya armamos (¡sin repetir código!)
         gray_image = Grayscale().apply(image)
 
-        # 2. Después aplicamos el umbral adaptativo de OpenCV para lidiar con las sombras
+        # 2. Después aplicamos el umbral adaptativo de OpenCV
+        # para lidiar con las sombras
         return cv2.adaptiveThreshold(
             gray_image,
             255,
@@ -65,3 +68,41 @@ class BlackAndWhite(Filter):
             self.block_size,
             self.c
         )
+
+
+class ColorCorrection(Filter):
+    """
+    Filtro que corrige el balance de blancos de la imagen para que el papel
+    amarillento por la luz cálida vuelva a verse blanco.
+    """
+
+    def __init__(self, percentile: float = 95.0) -> None:
+        """Guarda el percentil que se usará para detectar el color del papel."""
+        self.percentile = percentile
+
+    def apply(self, image: np.ndarray) -> np.ndarray:
+        """Aplica la corrección de color estirando los canales según el percentil."""
+        # Si la imagen es en grises (2 dimensiones), no tiene canales de
+        # color para corregir, la devolvemos igual
+        if image.ndim == 2:
+            return image.copy()
+
+        # a. Calculamos el color del papel usando el percentil para cada canal (B, G, R)
+        paper_color = np.percentile(image, self.percentile, axis=(0, 1))
+
+        # b. Calculamos cuánto estirar cada color (255 / color del papel). 
+        # Usamos np.maximum para evitar dividir por 0 en caso de
+        # que alguna parte sea negra pura.
+        scaling_factors = 255.0 / np.maximum(paper_color, 1)
+
+        # c. Pasamos la imagen a decimales (float32) y la multiplicamos 
+        # por los factores (broadcasting)
+        corrected_image = image.astype(np.float32) * scaling_factors
+
+        # d. Recortamos con np.clip para que ningún valor pase de 255
+        # ni baje de 0, y volvemos a uint8
+        corrected_image = np.clip(corrected_image, 0, 255)
+        
+        return corrected_image.astype(np.uint8)
+
+        
