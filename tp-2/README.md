@@ -29,27 +29,14 @@ cd backend
 pytest tests/test_contract.py -v
 ```
 
-Se entregan el frontend, los tests, los schemas (`app/schemas.py`) y los routers
-(`app/routers/`) con los endpoints declarados, que por ahora responden ejemplos vacíos. También
-viene resuelto todo lo de abrir imágenes y validar: `docscan/imageio.py` (abre la foto con EXIF,
-convierte Pillow ↔ OpenCV, codifica el PNG), `docscan/exceptions.py`, `app/uploads.py` (validación
-del archivo subido) y `app/errors.py` (traducción de excepciones a HTTP). Falta la detección del
-documento, la corrección de perspectiva, los filtros, la CLI, el almacenamiento y completar cada
-endpoint. En el estado inicial los tests dan `48 failed, 31 passed`; el trabajo del equipo es lograr
-que pasen todos.
-
 ## Integrantes
 
-- _completar_
+- Abigail Nina
+- Gastón Ramírez
+- Pablo Speranza
+- Rocío Vázquez
 
-   ## Integrantes
-
-   - Abigail Nina
-   - Gastón Ramírez
-   - Pablo Speranza
-   - Rocío Vázquez
-
-   ## Tests propios
+## Tests propios
 
 Además de los tests de aceptación, agregamos tests propios del core, del almacenamiento y con fotos reales:
 
