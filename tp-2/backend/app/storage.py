@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from app.config import STORAGE_DIR
+from app.config import MEDIA_URL, STORAGE_DIR
 from app.errors import ScanNotFound
 from app.schemas import ScanOut
 
@@ -19,7 +19,7 @@ class ScanRepository:
 
     def _validate_scan_id(self, scan_id: str) -> str:
         if not scan_id or not re.fullmatch(r"[0-9a-fA-F]{32}", scan_id):
-            raise ValueError(f"ID inválido: {scan_id!r}")
+            raise ScanNotFound(scan_id)
         return scan_id
 
     def _scan_path(self, scan_id: str, suffix: str = "") -> Path:
@@ -49,14 +49,14 @@ class ScanRepository:
         payload = {
             "id": scan_id,
             "original_name": original_name,
-            "url": f"/media/{scan_id}.png",
-            "original_url": f"/media/{scan_id}-original{original_ext}",
+            "url": f"{MEDIA_URL}/{scan_id}.png",
+            "original_url": f"{MEDIA_URL}/{scan_id}-original{original_ext}",
             "width": width,
             "height": height,
             "size_bytes": len(scan_bytes),
             "corners": corners,
             "options": options,
-            "created_at": datetime.utcnow().isoformat(timespec="seconds"),
+            "created_at": datetime.now().isoformat(timespec="seconds"),
         }
 
         metadata_path = self._scan_path(scan_id, ".json")

@@ -3,6 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, File, Form, UploadFile, status
 
+from app.config import MEDIA_URL
 from app.errors import ScanNotFound
 from app.schemas import ColorMode, ErrorOut, ScanOptions, ScanOut
 from app.storage import ScanRepository
@@ -38,7 +39,13 @@ async def create_scan(
         soften_colors=soften_colors,
     )
 
-    original_ext = Path(upload.name).suffix or ".jpg"
+    extension_map = {
+        "JPEG": ".jpg",
+        "PNG": ".png",
+        "WEBP": ".webp",
+        "BMP": ".bmp",
+    }
+    original_ext = extension_map.get(upload.photo.format.upper(), ".jpg")
 
     scan_id = repo.save(
         original_name=upload.name,
