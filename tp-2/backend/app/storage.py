@@ -11,6 +11,8 @@ from app.schemas import ScanOut
 
 
 class ScanRepository:
+    """Gestiona el almacenamiento y la metadata de los escaneos."""
+
     def __init__(self, base_dir: str | Path = STORAGE_DIR):
         self.base_dir = Path(base_dir)
         self.base_dir.mkdir(parents=True, exist_ok=True)
