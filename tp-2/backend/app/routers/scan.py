@@ -1,21 +1,17 @@
-from datetime import datetime
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, File, Form, UploadFile, status
 
+from app.errors import ScanNotFound
 from app.schemas import ColorMode, ErrorOut, ScanOptions, ScanOut
+from app.storage import ScanRepository
 from app.uploads import read_upload
+from docscan.imageio import encode_png
+from docscan.scanner import Scanner
 
 router = APIRouter(prefix="/api/scans", tags=["scans"])
-
-
-def empty_scan(scan_id: str = "", original_name: str = "", options: ScanOptions | None = None) -> ScanOut:
-    """Placeholder answer with the right shape. Delete it once the endpoints are implemented."""
-    return ScanOut(
-        id=scan_id, original_name=original_name, url="", original_url="",
-        width=0, height=0, size_bytes=0, corners=[],
-        options=options or ScanOptions(), created_at=datetime.now(),
-    )
+repo = ScanRepository()
 
 
 @router.post(
@@ -32,22 +28,40 @@ async def create_scan(
     soften_colors: Annotated[float, Form(ge=0, le=1)] = 0.0,
 ):
     options = ScanOptions(color_mode=color_mode, color_correction=color_correction, soften_colors=soften_colors)
-    upload = await read_upload(file)  # given: 413 FILE_TOO_LARGE / 400 INVALID_FILE / 400 UNSUPPORTED_FORMAT
-    # TODO (team): scan upload.photo.image with docscan, save the result (PNG), the original
-    # photo (upload.content) and the metadata, and return the saved scan.
-    return empty_scan(original_name=upload.name, options=options)
+    upload = await read_upload(file)
+
+    scanner = Scanner()
+    result = scanner.scan(
+        upload.photo.image,
+        color_mode=color_mode,
+        color_correction=color_correction,
+        soften_colors=soften_colors,
+    )
+
+    original_ext = Path(upload.name).suffix or ".jpg"
+
+    scan_id = repo.save(
+        original_name=upload.name,
+        original_bytes=upload.content,
+        original_ext=original_ext,
+        scan_bytes=encode_png(result.image),
+        width=result.image.shape[1],
+        height=result.image.shape[0],
+        corners=[[float(x), float(y)] for x, y in result.corners],
+        options=options.model_dump(),
+    )
+
+    return repo.get(scan_id)
 
 
 @router.get("", response_model=list[ScanOut], summary="List the scans, newest first")
 def list_scans():
-    # TODO (team): read the saved scans.
-    return []
+    return repo.list()
 
 
 @router.get("/{scan_id}", response_model=ScanOut, summary="Get a scan", responses={404: {"model": ErrorOut}})
 def get_scan(scan_id: str):
-    # TODO (team): read the scan, or answer 404 SCAN_NOT_FOUND.
-    return empty_scan(scan_id)
+    return repo.get(scan_id)
 
 
 @router.delete(
@@ -57,5 +71,5 @@ def get_scan(scan_id: str):
     responses={404: {"model": ErrorOut}},
 )
 def delete_scan(scan_id: str):
-    # TODO (team): delete the files of the scan, or answer 404 SCAN_NOT_FOUND.
+    repo.delete(scan_id)
     return None
