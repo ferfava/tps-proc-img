@@ -48,10 +48,6 @@ BLANK_BOTTOM_LEFT = (0.06, 0.70, 0.40, 0.92)
 PATCH = (0.62, 0.75, 0.84, 0.86)         # inside the colored patch at the bottom-right
 
 
-# ===========================================================================
-# Synthetic photos
-# ===========================================================================
-
 def document(size=PORTRAIT, paper=PAPER, patch=None) -> np.ndarray:
     """
     An RGB page: a black square at the top-left (to tell where "up" is), some
@@ -128,10 +124,6 @@ def encode(rgb: np.ndarray | Image.Image, fmt: str = "PNG", **save_args) -> byte
 MIME = {"PNG": "image/png", "JPEG": "image/jpeg", "WEBP": "image/webp", "BMP": "image/bmp", "GIF": "image/gif"}
 
 
-# ===========================================================================
-# HTTP helpers
-# ===========================================================================
-
 def post_file(client, path: str, content: bytes, name: str = "photo.png",
               mime: str = "image/png", options: dict | None = None):
     data = {k: str(v).lower() if isinstance(v, bool) else str(v) for k, v in (options or {}).items()}
@@ -172,9 +164,6 @@ def stored_files() -> set[str]:
     return {p.name for p in STORAGE_DIR.rglob("*") if p.is_file()} if STORAGE_DIR.exists() else set()
 
 
-# ===========================================================================
-# Pixel helpers
-# ===========================================================================
 
 def region(img: Image.Image, box) -> np.ndarray:
     a = np.asarray(img.convert("RGB"), dtype=float)
@@ -226,19 +215,11 @@ def assert_corners(corners, expected: np.ndarray, tolerance: float = 0.02):
         assert distance <= max_distance, f"{name} corner: expected ≈{want.round(1).tolist()}, got {got}"
 
 
-# ===========================================================================
-# System
-# ===========================================================================
-
 def test_health(client):
     r = client.get("/api/health")
     assert r.status_code == 200
     assert r.json() == {"status": "ok"}
 
-
-# ===========================================================================
-# Upload validation (same rules for /api/detect and /api/scans)
-# ===========================================================================
 
 ENDPOINTS = ["/api/detect", "/api/scans"]
 
@@ -284,10 +265,6 @@ def test_format_is_detected_by_content(client):
     r = post_file(client, "/api/detect", encode(photo(document())[0], "PNG"), "photo.jpg", "image/jpeg")
     assert r.status_code == 200, r.text
 
-
-# ===========================================================================
-# POST /api/detect
-# ===========================================================================
 
 def test_detect_response(client):
     rgb, corners = photo(document(), angle=12)
@@ -363,10 +340,6 @@ def test_detect_stores_nothing(client):
     assert len(client.get("/api/scans").json()) == listed
 
 
-# ===========================================================================
-# POST /api/scans: response and storage
-# ===========================================================================
-
 def test_scan_response(client):
     rgb, corners = photo(document(), angle=12)
     r = post_file(client, "/api/scans", encode(rgb), "invoice.png")
@@ -427,10 +400,6 @@ def test_scan_document_not_found_stores_nothing(client, kind):
     assert len(client.get("/api/scans").json()) == listed
 
 
-# ===========================================================================
-# POST /api/scans: geometry
-# ===========================================================================
-
 @pytest.mark.parametrize("angle", [0, 12, -15, 25])
 def test_scan_is_straight_and_cropped(client, angle):
     scan = scan_ok(client, photo(document(), angle=angle)[0])
@@ -459,10 +428,6 @@ def test_scan_keeps_a_readable_resolution(client):
     scan = scan_ok(client, photo(document(), angle=12)[0])
     assert scan["width"] >= 270 and scan["height"] >= 380, (scan["width"], scan["height"])
 
-
-# ===========================================================================
-# POST /api/scans: options
-# ===========================================================================
 
 def test_options_are_returned_with_defaults(client):
     scan = scan_ok(client, options={"color_mode": "grayscale"})
@@ -572,10 +537,6 @@ def test_soften_colors_does_not_touch_ink_or_paper(client):
         assert np.abs(a - b).max() <= 12, f"{name} must not change: {a.round().tolist()} → {b.round().tolist()}"
 
 
-# ===========================================================================
-# GET /api/scans, GET/DELETE /api/scans/{id}
-# ===========================================================================
-
 def test_get_scan(client):
     scan = scan_ok(client)
     r = client.get(f"/api/scans/{scan['id']}")
@@ -642,10 +603,6 @@ def test_scans_survive_a_restart(client):
     assert result.returncode == 0, result.stderr
     assert result.stdout.split() == ["200", scan["url"]], result.stdout + result.stderr
 
-
-# ===========================================================================
-# The core (docscan) is reusable without the API
-# ===========================================================================
 
 def test_core_does_not_depend_on_the_api():
     result = run_python("""
