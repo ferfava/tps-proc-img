@@ -214,6 +214,8 @@ No se implementaron OCR, corrección de curvatura avanzada ni edición manual de
 
 Se utilizó Git y GitHub con una rama compartida para el TP (`Lab03_01_tp2_FTB`). El desarrollo combinó el detector y los filtros iniciales con la implementación de la corrección de perspectiva, la integración del escáner, la persistencia y la CLI. Estos aportes se integraron mediante el [Pull Request #8](https://github.com/ioanne/tps-proc-img/pull/8).
 
----
+## Diagrama UML
 
-**Pendientes de cierre:** agregar las evidencias reales, el diagrama UML y subir a la rama conjunta los cambios de tests y la corrección de `SoftenColorsFilter`; confirmar también los nombres completos de todos los integrantes.
+El diseño de clases, las relaciones de herencia y las
+dependencias principales del escáner están documentados
+en el [diagrama UML del proyecto](docs/uml.md).
