@@ -219,3 +219,9 @@ Se utilizó Git y GitHub con una rama compartida para el TP (`Lab03_01_tp2_FTB`)
 El diseño de clases, las relaciones de herencia y las
 dependencias principales del escáner están documentados
 en el [diagrama UML del proyecto](docs/uml.md).
+
+## Evidencias de pruebas reales
+
+Se realizaron pruebas con una hoja con texto y un mouse pad, utilizando los modos Color, Grayscale y B&W.
+
+Los resultados y las limitaciones observadas se encuentran en [Evidencias de pruebas reales](docs/evidencias/README.md).
